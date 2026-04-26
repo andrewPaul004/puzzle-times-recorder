@@ -1,0 +1,134 @@
+# generated: 2026-04-25
+# last_updated: 2026-04-26
+# project: PuzzleTimesRecorder
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+#
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-25
+last_updated: 2026-04-26
+project: PuzzleTimesRecorder
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ─── Epic 1: Project Foundation, Authentication & Platform Shell ───
+  epic-1: in-progress
+  1-1-project-scaffold-development-environment: ready-for-dev
+  1-2-database-schema-row-level-security-foundation: backlog
+  1-3-design-system-brand-tokens: backlog
+  1-4-user-registration-login-authentication: backlog
+  1-5-user-profile-management: backlog
+  1-6-application-shell-navigation-pwa-foundation: backlog
+  1-7-i18n-architecture-notification-preferences: backlog
+  epic-1-retrospective: optional
+
+  # ─── Epic 2: Puzzle Catalog & Public Discovery ───
+  epic-2: backlog
+  2-1-command-palette-catalog-search: backlog
+  2-2-public-puzzle-discovery-seo: backlog
+  2-3-puzzle-detail-page: backlog
+  2-4-community-ratings-micro-reviews: backlog
+  2-5-submit-new-puzzle-report-missing-puzzle-of-the-week-card: backlog
+  epic-2-retrospective: optional
+
+  # ─── Epic 3: Solve Logging & Offline ───
+  epic-3: backlog
+  3-1-activity-dashboard-home-timer-initiation: backlog
+  3-2-timerscreen-full-screen-solve-timer: backlog
+  3-3-solveconfirmation-puzzle-identification-via-barcode-scan: backlog
+  3-4-postcompletionscreen-solve-save: backlog
+  3-5-optional-photo-personal-note-on-solve: backlog
+  3-6-offline-solve-queue-automatic-sync: backlog
+  3-7-solve-history-collection-manager: backlog
+  epic-3-retrospective: optional
+
+  # ─── Epic 4: Gamification & Personal Analytics ───
+  epic-4: backlog
+  4-1-streak-tracking-streak-history: backlog
+  4-2-personal-best-times-former-champion-badge: backlog
+  4-3-badge-system-retroactive-awards: backlog
+  4-4-personal-analytics-dashboard-puzzle-passport: backlog
+  4-5-personal-puzzling-goals-progress-meter: backlog
+  4-6-premium-streak-shield: backlog
+  epic-4-retrospective: optional
+
+  # ─── Epic 5: MSP Import & Data Portability ───
+  epic-5: backlog
+  5-1-msp-csv-import-upload-fuzzy-matching: backlog
+  5-2-unmatched-solve-review-queue: backlog
+  5-3-import-completion-pioneer-migrator-badge: backlog
+  5-4-universal-spreadsheet-import: backlog
+  5-5-full-data-export: backlog
+  epic-5-retrospective: optional
+
+  # ─── Epic 6: Swap Marketplace ───
+  epic-6: backlog
+  6-1-create-swap-listing-with-condition-grading: backlog
+  6-2-marketplace-browse-filter: backlog
+  6-3-listing-detail-swap-request-flow: backlog
+  6-4-swap-confirmation-receipt-rating: backlog
+  6-5-dispute-reporting-listing-management: backlog
+  epic-6-retrospective: optional
+
+  # ─── Epic 7: Premium Subscriptions & Freemium Gating ───
+  epic-7: backlog
+  7-1-stripe-integration-premium-upgrade-flow: backlog
+  7-2-premium-feature-access-freemium-gate-enforcement: backlog
+  7-3-subscription-management-cancellation: backlog
+  epic-7-retrospective: optional
+
+  # ─── Epic 8: Community & Social ───
+  epic-8: backlog
+  8-1-community-leaderboards: backlog
+  8-2-follow-users-activity-feed: backlog
+  8-3-share-solve-via-web-share-api: backlog
+  8-4-puzzle-of-the-week: backlog
+  8-5-curated-puzzle-lists: backlog
+  8-6-feature-request-board-browse-vote: backlog
+  8-7-feature-request-submission: backlog
+  8-8-feature-request-notifications-premium-beta: backlog
+  8-9-in-app-contextual-feedback: backlog
+  epic-8-retrospective: optional
+
+  # ─── Epic 9: Platform Administration & Trust Infrastructure ───
+  epic-9: backlog
+  9-1-admin-panel-foundation-role-enforcement: backlog
+  9-2-swap-dispute-queue-resolution: backlog
+  9-3-reputation-score-adjustment-account-restrictions: backlog
+  9-4-admin-audit-log: backlog
+  9-5-puzzle-catalog-moderation: backlog
+  9-6-gdpr-data-deletion-right-to-erasure: backlog
+  9-7-puzzle-of-the-week-designation-sponsorship: backlog
+  9-8-feature-request-administration: backlog
+  epic-9-retrospective: optional

@@ -741,10 +741,10 @@ Eight bespoke components that define the product's signature interactions:
 TimerScreen, SolveConfirmation, PostCompletionScreen, SolveJournalEntry, ConditionGradeSelector, ImportReviewCard
 
 **Phase 2 — V1 supporting:**
-ReputationBadge, PuzzlePassportCard
+ReputationBadge, PuzzlePassportCard, PuzzleOfTheWeek card (Epic 2 Story 2.5 shell; wired in Epic 8 Story 8.4)
 
 **Phase 3 — V1.5:**
-AI Coach result card, Recommendation card, Contest/Puzzle of the Week card
+AI Coach result card, Recommendation card
 
 ---
 

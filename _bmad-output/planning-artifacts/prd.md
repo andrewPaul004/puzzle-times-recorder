@@ -1,5 +1,9 @@
 ---
-stepsCompleted: ["step-01-init", "step-02-discovery", "step-02b-vision", "step-02c-executive-summary", "step-03-success", "step-04-journeys", "step-05-domain", "step-06-innovation", "step-07-project-type", "step-08-scoping", "step-09-functional", "step-10-nonfunctional", "step-11-polish"]
+stepsCompleted: ["step-01-init", "step-02-discovery", "step-02b-vision", "step-02c-executive-summary", "step-03-success", "step-04-journeys", "step-05-domain", "step-06-innovation", "step-07-project-type", "step-08-scoping", "step-09-functional", "step-10-nonfunctional", "step-11-polish", "step-e-01-discovery", "step-e-02-review", "step-e-03-edit"]
+lastEdited: "2026-04-26"
+editHistory:
+  - date: "2026-04-26"
+    changes: "Added FR57 (Public Feature Request Board), FR58 (In-App Contextual Feedback); updated FR37 to include early beta access as Premium perk"
 releaseMode: phased
 inputDocuments:
   - "_bmad-output/planning-artifacts/research/market-jigsaw-puzzle-tracking-community-platform-research-2026-04-25.md"
@@ -386,7 +390,7 @@ Leaderboards and community feeds: **near-real-time** (polling or on-load refresh
 - **FR34:** Users can register for an account and complete onboarding with a first solve logged within 5 minutes
 - **FR35:** Users can manage their profile including display name, avatar, location, and puzzling preferences
 - **FR36:** Users can upgrade to a Premium Individual subscription
-- **FR37:** Premium Individual subscribers can access streak shields, unlimited swap listings, and enhanced analytics
+- **FR37:** Premium Individual subscribers can access streak shields, unlimited swap listings, enhanced analytics, and early beta access to newly shipped features before public release
 - **FR38:** Users can manage, pause, or cancel their subscription
 - **FR39:** Users can configure notification preferences for swap activity, badge awards, and community interactions
 - **FR40:** Users can access the platform interface in their preferred language
@@ -399,6 +403,8 @@ Leaderboards and community feeds: **near-real-time** (polling or on-load refresh
 - **FR54:** The platform designates a weekly featured puzzle (Puzzle of the Week); users who log a solve that week appear on a time-limited special leaderboard
 - **FR55:** Users can create, name, publish, and follow curated puzzle lists (e.g., "Best Puzzles for Beginners," "My 2026 Bucket List")
 - **FR56:** Administrators can designate and mark the Puzzle of the Week as sponsored for manufacturer brand placement
+- **FR57:** Users can submit, view, and upvote feature requests on a public board; each request displays vote count and a platform-managed status tag (Under Review / Planned / In Progress / Shipped / Won't Build); the platform publishes a public response when a request crosses a configurable vote threshold; users who voted on a request receive a notification when its status changes to Shipped
+- **FR58:** Users can submit feedback from any page in the application via a persistent in-app affordance; submissions are automatically tagged with the originating page and feature context at time of submission; users may optionally attach a screenshot
 
 ### Platform Administration
 

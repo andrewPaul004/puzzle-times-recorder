@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ["step-01-validate-prerequisites", "step-02-design-epics", "step-03-create-stories", "step-04-final-validation"]
+stepsCompleted: ["step-01-validate-prerequisites", "step-02-design-epics", "step-03-create-stories", "step-04-final-validation", "epic-2-stories-added-2026-04-25", "readiness-review-fixes-2026-04-25", "fr57-fr58-added-2026-04-26"]
 inputDocuments:
   - "_bmad-output/planning-artifacts/prd.md"
   - "_bmad-output/planning-artifacts/architecture.md"
@@ -80,6 +80,8 @@ This document provides the complete epic and story breakdown for PuzzleTimesReco
 - FR54: The platform designates a weekly featured puzzle (Puzzle of the Week); users who log a solve that week appear on a time-limited special leaderboard
 - FR55: Users can create, name, publish, and follow curated puzzle lists (e.g., "Best Puzzles for Beginners," "My 2026 Bucket List")
 - FR56: Administrators can designate and mark the Puzzle of the Week as sponsored for manufacturer brand placement
+- FR57: Users can submit, view, and upvote feature requests on a public board; each request displays vote count and a platform-managed status tag; the platform publishes a public response at a configurable vote threshold; voters are notified when a request ships
+- FR58: Users can submit feedback from any page via a persistent in-app affordance; submissions are automatically tagged with originating page and feature context; optional screenshot attachment
 
 **Platform Administration**
 - FR44: Administrators can view, investigate, and resolve reported swap disputes
@@ -288,9 +290,9 @@ This document provides the complete epic and story breakdown for PuzzleTimesReco
 | FR51 | Epic 4 | Notify record holder + displaced holder on PB surpass |
 | FR52 | Epic 4 | Former Champion badge on profile |
 | FR53 | Epic 6 | ISO (In Search Of) alerts for specific puzzles |
-| FR54 | Epic 8 | Puzzle of the Week + time-limited special leaderboard |
+| FR54 | Epic 8 (consumer: Story 8.4), Epic 9 (admin: Story 9.7) | Puzzle of the Week + time-limited special leaderboard |
 | FR55 | Epic 8 | Create + follow curated puzzle lists |
-| FR56 | Epic 8 | Admin designates + sponsors Puzzle of the Week |
+| FR56 | Epic 8 (display: Story 8.4), Epic 9 (admin designation: Story 9.7) | Admin designates + sponsors Puzzle of the Week |
 
 ## Epic List
 
@@ -330,13 +332,13 @@ Users can upgrade to a Premium Individual subscription via Stripe, access premiu
 **Also covers:** ARCH6 (premium gating middleware enforcement), NFR11 (Stripe PCI delegation), NFR29 (Stripe webhook + retry handling)
 
 ### Epic 8: Community & Social
-Users can follow other puzzlers, view a friend activity feed, browse contextually framed leaderboards, share solves via the Web Share API, participate in the weekly Puzzle of the Week with its special leaderboard, and create or follow curated puzzle lists.
-**FRs covered:** FR41, FR42, FR43, FR54, FR55, FR56
+Users can follow other puzzlers, view a friend activity feed, browse contextually framed leaderboards, share solves via the Web Share API, participate in the weekly Puzzle of the Week with its special leaderboard, create or follow curated puzzle lists, submit and upvote feature requests on a public board, and send contextual in-app feedback.
+**FRs covered:** FR41, FR42, FR43, FR54, FR55, FR56, FR57, FR58
 **Also covers:** UX-DR25 (Puzzle of the Week featured card), UX-DR16 (activity feed empty state), NFR31 (Web Share API + clipboard fallback)
 
 ### Epic 9: Platform Administration & Trust Infrastructure
-Administrators can investigate and resolve swap disputes, adjust reputation scores, apply tiered account restrictions, view a tamper-evident audit log of all moderation actions, and moderate the puzzle catalog (merge duplicates, correct metadata).
-**FRs covered:** FR44, FR45, FR46, FR47, FR48
+Administrators can investigate and resolve swap disputes, adjust reputation scores, apply tiered account restrictions, view a tamper-evident audit log of all moderation actions, moderate the puzzle catalog (merge duplicates, correct metadata), designate the weekly Puzzle of the Week with optional sponsorship, and manage the public feature request board (status updates, public responses, vote-threshold alerts).
+**FRs covered:** FR44, FR45, FR46, FR47, FR48, FR54 (admin designation side), FR56 (admin sponsorship side), FR57 (admin side)
 **Also covers:** ARCH7 (admin role enforcement in middleware and Route Handlers), ARCH15 (GDPR deletion cascade Edge Function + 30-day SLA)
 
 ---
@@ -552,6 +554,13 @@ So that I can reach any primary feature in one tap and use the platform like a n
 **And** all interactive elements display a visible focus ring on keyboard focus (focus-visible:ring-2 focus-visible:ring-primary)
 **And** tab bar items are keyboard-navigable
 
+**Given** a developer inspects `components/shared/PremiumGate.tsx`
+**When** reviewing the component implementation
+**Then** it accepts a `children` prop and a `feature` label string
+**And** it reads the subscription status from the request header set by Middleware (via a context or server prop — never an independent DB query)
+**And** for Premium subscribers it renders `children` transparently
+**And** for free-tier users it renders a contained upsell card with the `feature` label and a "Upgrade to Premium" CTA linking to /settings/subscription
+
 ---
 
 ### Story 1.7: i18n Architecture & Notification Preferences
@@ -583,6 +592,193 @@ So that the experience is localised and I only hear about things that matter to 
 **When** a developer inspects the layout
 **Then** the layout does not catastrophically break (logical CSS properties handle mirroring)
 **And** this is verified via a visual inspection test — full RTL activation is not required at launch but needs no rework to enable
+
+---
+
+## Epic 2: Puzzle Catalog & Public Discovery
+
+Users can browse the puzzle catalog, view detailed puzzle pages with community ratings, submit ratings and micro-reviews, report missing puzzles, and add new puzzles. Unauthenticated visitors can discover puzzles via SEO-optimized public pages.
+
+### Story 2.1: Command-Palette Catalog Search
+
+As a puzzler looking for a specific puzzle,
+I want to search the catalog instantly using a command-palette overlay,
+So that I can find any puzzle by title, brand, piece count, or theme without leaving my current screen.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user on any authenticated screen
+**When** they tap the search icon or "Search catalog" entry point
+**Then** a full-screen overlay opens immediately with a focused text input
+
+**Given** the catalog search overlay is open
+**When** the user types a query
+**Then** results appear within 200ms of the user stopping typing (debounced), showing puzzle image, title, brand, and piece count for each match
+
+**Given** a search query that returns results
+**When** the results render
+**Then** they appear in ≤1 second for any query against the full catalog (NFR5)
+**And** the query key used is imported from `lib/query-keys.ts` (e.g., `queryKeys.catalog.search(query)`) — never an inline string
+
+**Given** a search query that returns no results
+**When** the empty state renders
+**Then** a warm illustration appears with the headline "We don't have that one yet" and two recovery CTAs: "Submit this puzzle" (primary) and "Search differently" (secondary)
+**And** "Submit this puzzle" navigates to the puzzle submission form (Story 2.5) with the search query pre-filled in the title field
+
+**Given** a user who opens the catalog search overlay
+**When** they press Escape or tap outside the overlay
+**Then** the overlay closes and focus returns to the element that triggered it (UX-DR22 focus management)
+
+**Given** any screen reader user accessing the search overlay
+**When** the overlay opens
+**Then** focus moves to the search input automatically and results are announced via an `aria-live="polite"` region
+
+---
+
+### Story 2.2: Public Puzzle Discovery & SEO
+
+As an unauthenticated visitor arriving from a search engine,
+I want to browse puzzle catalog pages without needing an account,
+So that I can discover the platform organically and decide whether to join.
+
+**Acceptance Criteria:**
+
+**Given** an unauthenticated visitor navigating to `/catalog` or `/catalog/[slug]`
+**When** their request is handled
+**Then** the page loads without redirecting to `/login` — no authentication check is applied to these routes in Middleware
+
+**Given** the public catalog browse page at `/catalog`
+**When** it is rendered at build time or on revalidation
+**Then** it is served as SSG/ISR from `app/(public)/catalog/page.tsx`
+**And** it shows browsable puzzle listings with title, brand, piece count, difficulty, and aggregated community rating visible without login
+
+**Given** a specific puzzle detail page at `/catalog/[slug]`
+**When** it is rendered
+**Then** it is served as ISR (Next.js ISR, revalidated on catalog update)
+**And** the page includes structured data (JSON-LD) with puzzle name, brand, piece count, and aggregated rating for search engine indexing
+
+**Given** an unauthenticated visitor viewing a puzzle detail page
+**When** they see the "Log a solve" CTA
+**Then** tapping it redirects to `/login?return=/catalog/[slug]` so they are returned to the puzzle page after signing up or signing in
+
+**Given** the `app/(public)/` route group
+**When** a developer inspects the Middleware configuration
+**Then** all routes under `(public)/` bypass the authenticated session check — they are accessible via the anon key with public RLS policies
+
+---
+
+### Story 2.3: Puzzle Detail Page
+
+As a puzzler viewing a puzzle,
+I want to see all the details — title, brand, piece count, difficulty, and what the community thinks of it,
+So that I can decide whether it's worth solving or swapping for.
+
+**Acceptance Criteria:**
+
+**Given** a user (authenticated or unauthenticated) on `/catalog/[slug]`
+**When** the page loads
+**Then** the following are all visible: puzzle title, brand, piece count, difficulty (displayed as a 1–5 scale), aggregated community rating (shown as a numeric average and star visual), and number of community ratings
+
+**Given** a puzzle with no community ratings yet
+**When** the rating section renders
+**Then** a warm empty prompt appears ("Be the first to rate this puzzle") rather than a blank or zero-star display
+
+**Given** a logged-in user who has previously solved this puzzle
+**When** they view the puzzle detail page
+**Then** their own recorded solve times for this puzzle are shown ("Your best: 1h 23m") if available
+**And** a "Rate this puzzle" / "Edit your rating" CTA is visible
+
+**Given** the puzzle detail page
+**When** a developer inspects the data-fetching code
+**Then** puzzle data is read directly in a Server Component using `lib/supabase/server.ts` — not via a Route Handler or client-side fetch
+
+**Given** a puzzle with the "Unverified" status (newly submitted via Story 2.5)
+**When** the detail page renders
+**Then** an "Unverified — pending admin review" badge is visible on the puzzle title
+**And** the puzzle is still browsable and linkable before admin approval
+
+---
+
+### Story 2.4: Community Ratings & Micro-Reviews
+
+As a puzzler who has completed a puzzle,
+I want to rate it and leave a short review,
+So that the community benefits from my experience and the catalog becomes more useful over time.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user on a puzzle detail page
+**When** they tap "Rate this puzzle"
+**Then** a rating form opens (inline or bottom sheet) with a 1–5 star selector and an optional micro-review text field (≤250 characters)
+
+**Given** a user submitting a rating
+**When** the form is submitted
+**Then** `safeParse` is called against the rating Zod schema in `lib/schemas/rating.schema.ts` before any DB write — never `parse()`
+**And** on success the aggregated community rating on the puzzle detail page updates to reflect the new submission without a full page reload
+
+**Given** a user who has already submitted a rating for a puzzle
+**When** they return to the puzzle detail page
+**Then** their existing rating and review are pre-filled in the form with the CTA now reading "Edit your rating"
+
+**Given** a user editing an existing rating
+**When** they submit the updated form
+**Then** the existing rating row is updated (not a duplicate inserted) and the aggregate recalculates
+
+**Given** the rating form
+**When** a user submits with the star selector at zero (no star selected)
+**Then** an inline field-level error appears ("Please select a star rating") — the form never submits with a zero rating
+**And** the submit button is never disabled for optional field state — only the missing required star rating prevents submission
+
+**Given** the ratings data on a puzzle detail page
+**When** the page is rendered for an unauthenticated visitor
+**Then** the aggregated rating and all existing reviews are visible — login is only required to submit a new rating
+
+---
+
+### Story 2.5: Submit New Puzzle, Report Missing & Puzzle of the Week Card
+
+As a puzzler who can't find a puzzle in the catalog,
+I want to submit it myself or report it as missing,
+So that the community catalog grows to cover every puzzle that exists.
+
+**Acceptance Criteria:**
+
+**Given** a user who reached the catalog search empty state (Story 2.1)
+**When** they tap "Submit this puzzle"
+**Then** the `SubmitPuzzleForm` component opens with the search query pre-filled in the title field
+
+**Given** the `SubmitPuzzleForm`
+**When** a user views it
+**Then** fields are: title (required), brand (searchable dropdown against existing brands in catalog), piece count (required), difficulty (optional 1–5 scale), photo (optional)
+
+**Given** a user on the submission form who wants to use a barcode instead of typing
+**When** they tap "Scan barcode"
+**Then** the `BarcodeScanOverlay` opens (the same overlay used in solve logging); on a successful scan, title and brand are pre-filled from the three-tier barcode lookup (`GET /api/barcode/[code]`)
+
+**Given** a user submitting a complete puzzle form
+**When** the form is submitted
+**Then** `safeParse` runs against `lib/schemas/puzzle-submit.schema.ts` before any write
+**And** on success a row is inserted in `puzzle_catalog` with `verified: false` and `status: 'pending_review'`
+**And** a success toast appears ("Puzzle submitted — thanks for helping!")
+**And** the puzzle is immediately searchable with an "Unverified" badge (Story 2.3 renders it)
+
+**Given** a user who wants to report a missing puzzle without submitting full details
+**When** they tap "Report missing puzzle" (available on the catalog search empty state and on the submission form)
+**Then** a lightweight report form opens: puzzle title (pre-filled if available), brief description of the issue
+**And** on submission a record is created for admin review (visible in Story 9.5's catalog moderation queue)
+**And** a success toast appears ("Thank you — we'll review this")
+
+**Given** an admin who has designated a Puzzle of the Week (administered in Story 9.x)
+**When** the `PuzzleOfTheWeek` component is included on `/community` (wired in Story 8.4)
+**Then** this story delivers the component itself: `components/community/PuzzleOfTheWeek.tsx` — a visually distinct editorial card (not a list item) using Fraunces for the heading, showing puzzle name, brand, piece count, "Solve this week" CTA, and a link to the time-limited special leaderboard
+
+**Given** the Puzzle of the Week is designated as sponsored (FR56)
+**When** the card renders
+**Then** a tasteful "Sponsored by [Brand]" label appears without dominating the card design
+
+**Given** a user who has already logged a solve for the active Puzzle of the Week
+**When** they view the `PuzzleOfTheWeek` card
+**Then** the CTA reads "You solved this — see your time" with their recorded time visible on the card
 
 ---
 
@@ -880,7 +1076,8 @@ So that I have meaningful performance goals.
 
 **Given** User A holds a personal best that User B surpasses (on the same puzzle leaderboard — FR51)
 **When** User B saves their solve
-**Then** both User A and User B receive an in-app notification about the record change
+**Then** `lib/gamification/personal-bests.ts` detects the record change and inserts a notification event row for both affected users
+**And** both User A and User B receive an in-app notification delivered via Supabase Realtime to their active sessions; users not currently active receive it on next app load
 
 **Given** User A is displaced from a record
 **When** they next view their profile
@@ -1144,11 +1341,16 @@ So that I'm not excluded from the import feature just because I wasn't on MSP.
 
 **Given** a user uploading a filled universal template
 **When** POST /api/import/msp processes it
-**Then** the format-detection logic in lib/fuzzy-match/ identifies it as a universal template (not MSP format) and applies the appropriate column mapping
+**Then** the format-detection logic in `lib/import/detect-format.ts` inspects the CSV header row: if it contains the MSP-specific columns (`puzzle_id`, `ranking`) it is treated as MSP format; otherwise it is treated as the universal template format
+**And** the universal template column mapping is: `puzzle_title` → title, `solve_date` → date, `solve_time` → time, `piece_count` → piece_count, `brand` → brand (optional)
 
 **Given** the universal import
 **When** it processes
 **Then** the same fuzzy matching, review queue, and completion flow as the MSP import applies (no separate code path needed — format auto-detection routes to the same pipeline)
+
+**Given** a universal template file with a malformed or missing required column
+**When** the format-detection or column mapping fails
+**Then** a row-level error is reported for each affected row (consistent with NFR28) and the rest of the import continues; the error message identifies the missing column by name (e.g., "Row 12: missing required column 'solve_time'")
 
 ---
 
@@ -1222,9 +1424,10 @@ So that I can quickly put my puzzle into the community marketplace.
 **When** completed on WiFi
 **Then** it completes in ≤5 seconds (NFR6)
 
-**Given** a free-tier user who has reached their active listing cap (FR33)
+**Given** a free-tier user who has reached their active listing cap (FR33 — 3 active listings)
 **When** they attempt to create a new listing
 **Then** a PremiumGate wrapper shows an upsell prompt rather than the listing form
+**And** the cap of 3 is enforced at both the UI layer (PremiumGate) and at the Route Handler (`POST /api/marketplace/listings`) — a free-tier user with 3 active listings receives a 403 with `{ error: "Free listing limit reached", code: "listing-limit-exceeded" }` if they attempt to bypass the UI
 
 ---
 
@@ -1257,8 +1460,9 @@ So that I can find puzzles I want to swap for quickly.
 **Then** all filters reset and the full listing grid returns
 
 **Given** filters applied in a session
-**When** the user navigates away and returns to the marketplace tab
-**Then** the active filters persist; filters reset only on tab switch to another tab and back
+**When** the user navigates within the marketplace (e.g., views a listing detail and returns)
+**Then** the active filters persist
+**And** filters reset when the user navigates away from the /marketplace route entirely (e.g., switches to Home, Catalog, or Profile tab) and then returns
 
 ---
 
@@ -1456,7 +1660,7 @@ So that I feel in control of my plan and not trapped.
 
 ## Epic 8: Community & Social
 
-Users can follow other puzzlers, view a friend activity feed, browse contextually framed leaderboards, share solves via the Web Share API, participate in the weekly Puzzle of the Week with its special leaderboard, and create or follow curated puzzle lists.
+Users can follow other puzzlers, view a friend activity feed, browse contextually framed leaderboards, share solves via the Web Share API, participate in the weekly Puzzle of the Week with its special leaderboard, create or follow curated puzzle lists, submit and upvote feature requests on a public board, and send contextual in-app feedback.
 
 ### Story 8.1: Community Leaderboards
 
@@ -1556,7 +1760,7 @@ So that I have a recurring community event to look forward to.
 
 **Acceptance Criteria:**
 
-**Given** an admin has designated a Puzzle of the Week (Story 9.x sets this up)
+**Given** an admin has designated a Puzzle of the Week (Story 9.7 sets this up; for local dev a seed entry is provided in supabase/seed.sql)
 **When** the /community page loads
 **Then** the PuzzleOfTheWeek component renders as a visually distinct, beautifully designed weekly card — not a list item
 
@@ -1600,7 +1804,8 @@ So that I can share my taste and help other puzzlers discover great puzzles.
 
 **Given** a user following a list
 **When** the list creator adds new puzzles
-**Then** followers see the updated list on their next visit
+**Then** followers see the updated list on their next visit (on-load refresh — no real-time push for list updates in V1)
+**And** no in-app notification is sent for list updates in V1; the follow relationship is a bookmark that surfaces updates passively on return
 
 **Given** any puzzle detail page
 **When** a user views it
@@ -1608,9 +1813,137 @@ So that I can share my taste and help other puzzlers discover great puzzles.
 
 ---
 
+### Story 8.6: Feature Request Board — Browse & Vote
+
+As a platform user,
+I want to browse the feature request board and upvote requests I care about,
+So that I can signal my priorities to the team and see where the platform is headed.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user navigating to /community/feature-requests
+**When** the page loads
+**Then** all feature requests are displayed as cards showing: title, short description, vote count, and a status tag (Under Review / Planned / In Progress / Shipped / Won't Build)
+
+**Given** the feature request list
+**When** it renders
+**Then** requests are sortable by vote count (default) and by date submitted; a filter by status tag is available
+
+**Given** a logged-in user viewing a request they have not yet voted on
+**When** they tap the upvote button
+**Then** their vote is recorded, the count increments immediately (optimistic update via TanStack Query), and the button state changes to "voted"
+
+**Given** a user who has already voted on a request
+**When** they view it
+**Then** the upvote button is shown in its "voted" state and tapping it removes their vote (toggle behaviour)
+
+**Given** a request with status "Won't Build"
+**When** the card renders
+**Then** the admin's public reason is displayed below the status tag — the reason field is required when an admin sets this status (enforced in Story 9.8)
+
+**Given** a request with a published admin response (set in Story 9.8)
+**When** the card renders
+**Then** the response is shown inline on the card beneath the request description
+
+**Given** an unauthenticated visitor on /community/feature-requests
+**When** they view the board
+**Then** all requests are visible in read-only mode; the upvote button prompts sign-in on tap
+
+---
+
+### Story 8.7: Feature Request Submission
+
+As a platform user,
+I want to submit a new feature request,
+So that I can suggest improvements to the platform.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user on /community/feature-requests
+**When** they tap "Submit a request"
+**Then** a form appears with fields: title (required, max 120 chars) and description (required, max 500 chars)
+
+**Given** a user typing a request title
+**When** they have entered at least 5 characters
+**Then** the form performs a live similarity search against existing requests and surfaces up to 3 potential duplicates with a prompt: "These existing requests might cover what you're looking for — would you like to upvote one instead?"
+
+**Given** a user submitting a new request
+**When** the form is saved
+**Then** a feature_requests row is created with: title, description, submitter_id, status: "Under Review", vote_count: 1 (auto-upvoted by submitter); the request appears on the board immediately
+
+**Given** a user who has already submitted a request in the current 24-hour window
+**When** they attempt to submit another
+**Then** an inline message informs them of the one-per-day submission limit — the limit is enforced at the Route Handler, not just in UI
+
+**Given** a successfully submitted request
+**When** the submission completes
+**Then** a confirmation toast appears ("Your request has been submitted") and the form closes; the user's new request is visible at the top of the board sorted by "newest"
+
+---
+
+### Story 8.8: Feature Request Notifications & Premium Beta
+
+As a platform user,
+I want to be notified when a feature I voted for ships,
+So that I know to look for it and feel that my input mattered.
+
+**Acceptance Criteria:**
+
+**Given** a user who voted on a feature request
+**When** an admin updates the request status to Shipped (Story 9.8)
+**Then** all voters receive an in-app notification: "A feature you voted for has shipped: [request title]" — delivered via the existing notification system (FR39)
+
+**Given** a Premium Individual subscriber (FR37)
+**When** an admin marks a shipped feature as "beta available" before setting status to Shipped
+**Then** Premium users receive early access to the feature; the feature request board shows a "Beta — available to Premium members" label on that card
+
+**Given** a non-Premium user viewing a card with the "Beta — available to Premium" label
+**When** they tap the label
+**Then** a bottom sheet explains what Premium beta access includes with a link to upgrade
+
+**Given** a feature request whose status changes from any state to Shipped
+**When** the status update is saved (Story 9.8)
+**Then** the notification fan-out to all voters is handled asynchronously via a Supabase Edge Function — not inline in the Route Handler response
+
+---
+
+### Story 8.9: In-App Contextual Feedback
+
+As a platform user,
+I want to send feedback from wherever I am in the app,
+So that I can report issues or suggestions in context without leaving my current task.
+
+**Acceptance Criteria:**
+
+**Given** any authenticated page in the application
+**When** a user views the page
+**Then** a persistent, unobtrusive feedback affordance is visible (e.g., a small button in the corner or accessible via the nav menu) — it does not interfere with primary page content
+
+**Given** a user opening the feedback form
+**When** the form appears
+**Then** the originating page path and feature context are automatically captured and attached to the submission (not shown to user, stored server-side for admin triage)
+
+**Given** a user composing feedback
+**When** they choose to attach a screenshot
+**Then** the browser's screenshot capability (or a manual file upload fallback) is available; the screenshot is attached to the submission
+
+**Given** a user submitting feedback
+**When** the submission completes
+**Then** a confirmation toast appears ("Thanks — your feedback has been received") and the form closes; the user is not redirected or interrupted
+
+**Given** an admin viewing the feedback queue (admin panel)
+**When** they open a submission
+**Then** the originating page, feature context tag, timestamp, user ID (anonymised display), and any attached screenshot are all visible
+
+**Given** any unauthenticated page
+**When** a visitor views it
+**Then** the feedback affordance is not shown — feedback is for logged-in users only in V1
+
+---
+
 ## Epic 9: Platform Administration & Trust Infrastructure
 
-Administrators can investigate and resolve swap disputes, adjust reputation scores, apply tiered account restrictions, view a tamper-evident audit log of all moderation actions, and moderate the puzzle catalog (merge duplicates, correct metadata).
+Administrators can investigate and resolve swap disputes, adjust reputation scores, apply tiered account restrictions, view a tamper-evident audit log of all moderation actions, moderate the puzzle catalog (merge duplicates, correct metadata), and manage the public feature request board (status updates, public responses, vote-threshold alerts).
 
 ### Story 9.1: Admin Panel Foundation & Role Enforcement
 
@@ -1777,3 +2110,85 @@ So that I can exercise my right to erasure under GDPR.
 **Given** the deletion is complete
 **When** an admin reviews the deletion_requests queue
 **Then** the request is marked "completed" with a timestamp — the 30-day SLA is trackable
+
+---
+
+### Story 9.7: Puzzle of the Week Designation & Sponsorship
+
+As a platform administrator,
+I want to designate a weekly featured puzzle, schedule its active week, and optionally mark it as sponsored,
+So that the Puzzle of the Week feature (FR54/FR56) has live content and the community card in Story 8.4 can function.
+
+**Acceptance Criteria:**
+
+**Given** an admin on /admin/puzzle-of-the-week
+**When** the page loads
+**Then** the current Puzzle of the Week (if any) is shown with its active week range, puzzle details, and sponsored status
+**And** a history of past Puzzle of the Week designations is listed below in reverse chronological order
+
+**Given** an admin tapping "Designate new Puzzle of the Week"
+**When** the form renders
+**Then** fields are: puzzle (catalog search — required), week start date (Monday only — required), sponsored toggle (off by default), sponsor name (text field, enabled only when sponsored is on)
+
+**Given** an admin submitting a valid designation
+**When** the form is saved
+**Then** a row is inserted in a `puzzle_of_the_week` table with: puzzle_id, week_start (Monday), week_end (Sunday), is_sponsored, sponsor_name, designated_by (admin user_id)
+**And** an audit log entry is appended recording the designation
+**And** the /community Puzzle of the Week card (Story 8.4) reflects the new designation immediately on next page load
+
+**Given** the week ending (Sunday midnight UTC)
+**When** the system checks the active designation
+**Then** the previous week's `puzzle_of_the_week` row is automatically marked `archived: true` by a Supabase scheduled Edge Function (or cron trigger)
+**And** the special leaderboard for that week becomes read-only
+
+**Given** an admin designating a sponsored Puzzle of the Week (FR56)
+**When** the designation is saved with `is_sponsored: true` and a sponsor name
+**Then** the PuzzleOfTheWeek card in Story 8.4 renders the "Sponsored by [sponsor name]" label
+**And** the audit log records the sponsor name alongside the admin action
+
+**Given** the supabase/seed.sql development seed file
+**When** `supabase db seed` is run locally
+**Then** a default Puzzle of the Week entry is seeded for the current week so Story 8.4 can be developed and tested before Story 9.7 is in place
+
+---
+
+### Story 9.8: Feature Request Administration
+
+As a platform administrator,
+I want to manage feature requests — updating their status, publishing responses, and being alerted when requests hit the vote threshold —
+So that the public board stays current and users feel the platform is genuinely responsive.
+
+**Acceptance Criteria:**
+
+**Given** an admin on /admin/feature-requests
+**When** the page loads
+**Then** all feature requests are shown in a sortable table with: title, vote count, current status, date submitted, and a "response published" indicator
+
+**Given** a request that has crossed the platform-configured vote threshold (configurable in /admin/settings, default: 10 votes)
+**When** the threshold is reached
+**Then** the admin panel surfaces the request in a "Needs Response" queue with a visual indicator; no automated public action is taken until the admin acts
+
+**Given** an admin updating a request's status
+**When** they select a new status from the dropdown (Under Review / Planned / In Progress / Shipped / Won't Build)
+**Then** the status updates immediately; if the new status is "Won't Build" the reason field is required before saving
+
+**Given** an admin saving a "Won't Build" status without a reason
+**When** they attempt to submit
+**Then** the save is blocked and the reason field is highlighted — the reason is required to maintain transparency on the public board (Story 8.6)
+
+**Given** an admin publishing a public response on a request
+**When** they submit the response text
+**Then** the response is saved and displayed on the request card in Story 8.6; the "response published" indicator updates in the admin table
+
+**Given** an admin setting a request status to Shipped
+**When** the update is saved
+**Then** the notification fan-out to all voters is triggered asynchronously (Story 8.8); the admin sees a confirmation that notifications are queued
+
+**Given** an admin marking a shipped feature as "beta available" before setting status to Shipped
+**When** this flag is set
+**Then** Premium users gain early access to the feature and the "Beta — available to Premium" label appears on the board card (Story 8.8); the Shipped status is set separately when the feature goes fully public
+
+**Given** all admin actions on feature requests
+**When** they are saved
+**Then** an audit_log entry is appended with: admin_id, action_type ("feature_request_status_update" or "feature_request_response_published"), request_id, new_value, timestamp
+
