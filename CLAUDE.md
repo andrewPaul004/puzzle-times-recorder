@@ -2,6 +2,47 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Branching Strategy
+
+```
+main                          ← production-ready; single source of truth
+└── epic/N-short-name         ← created from main when an epic starts
+    └── story/N.M-short-name  ← created from epic branch; merged back and deleted when story is done
+```
+
+**Starting an epic:**
+```bash
+git checkout main && git pull origin main
+git checkout -b epic/1-foundation
+git push -u origin epic/1-foundation
+```
+
+**Starting a story:**
+```bash
+git checkout epic/1-foundation
+git checkout -b story/1.1-scaffold
+```
+
+**Finishing a story:**
+```bash
+git checkout epic/1-foundation
+git merge story/1.1-scaffold
+git push origin epic/1-foundation
+git branch -d story/1.1-scaffold
+git push origin --delete story/1.1-scaffold
+```
+
+**Finishing an epic** (after retro is complete):
+```bash
+git checkout main && git pull origin main
+git merge epic/1-foundation
+git push origin main
+git branch -d epic/1-foundation
+git push origin --delete epic/1-foundation
+```
+
+**Rule:** Never merge to `main` unless `npm run type-check`, `npm run test`, `npm run test:a11y`, and `npm run test:e2e` all pass.
+
 ## Project Status
 
 Pre-scaffold. Planning artifacts are in `_bmad-output/planning-artifacts/`:
