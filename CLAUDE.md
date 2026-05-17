@@ -45,13 +45,17 @@ git push origin --delete epic/1-foundation
 
 ## Project Status
 
-Pre-scaffold. Planning artifacts are in `_bmad-output/planning-artifacts/`:
-- `prd.md` — full product requirements (56 FRs, NFRs)
-- `architecture.md` — all architectural decisions (read this before touching any code)
-- `ux-design-specification.md` — UX patterns, component specs, design tokens
-- `epics.md` — 9 epics, 44 stories; implementation sequence and acceptance criteria
+Pre-scaffold. The repo currently contains only `CLAUDE.md`, `.gitignore`, and `_bmad-output/planning-artifacts/`. No application code, `package.json`, or Supabase config exists yet — Story 1.1 creates them.
+
+Planning artifacts (read these before writing code):
+- `_bmad-output/planning-artifacts/prd.md` — full product requirements (56 FRs, NFRs)
+- `_bmad-output/planning-artifacts/architecture.md` — all architectural decisions, naming conventions, and the complete target directory tree
+- `_bmad-output/planning-artifacts/ux-design-specification.md` — UX patterns, component specs, design tokens
+- `_bmad-output/planning-artifacts/epics.md` — 9 epics, 44 stories; implementation sequence and acceptance criteria
 
 Story 1.1 initialises the project: `npx create-next-app -e with-supabase puzzle-times-recorder`
+
+Post-scaffold additions (per architecture.md): `framer-motion`, `serwist @serwist/next`, `next-intl`, `stripe @stripe/stripe-js`, `fuse.js`, `papaparse @types/papaparse`, `browser-image-compression`, `@zxing/browser @zxing/library`.
 
 ## Commands
 
@@ -88,6 +92,37 @@ npx playwright test e2e/solve-log.spec.ts
 - `app/api/` — Route Handlers only (not for general data fetching)
 
 **Data fetching rule:** Use Supabase client directly in Server Components for all reads. Route Handlers only for: `POST /api/sync/solves`, `POST /api/import/msp`, `GET /api/barcode/[code]`, `POST /api/webhooks/stripe`, `GET /api/export`, `POST /api/admin/*`.
+
+**Top-level project layout (target tree once scaffolded — see `architecture.md` §"Complete Project Directory Structure" for the full version):**
+```
+app/                  ← Routes, grouped by (public) / (app) / (admin) / api
+components/
+  ui/                 ← shadcn/ui primitives — never modify directly
+  [feature]/          ← Feature-scoped components, co-located with their tests
+lib/
+  supabase/           ← The three Supabase clients + auto-generated database.types.ts
+  schemas/            ← Zod schemas, shared client + server
+  query-keys.ts       ← All TanStack Query key factories (single file)
+  env.ts              ← Zod-validated env access (single source of process.env reads)
+  [domain]/           ← barcode/, fuzzy-match/, gamification/, reputation/, stripe/, notifications/, i18n/
+store/                ← Two Zustand stores only: timer.store.ts, offline.store.ts
+hooks/                ← Custom React hooks (useTimer, useSolveQueue, useBarcodeScan, useRealtimeSwaps)
+supabase/
+  migrations/         ← Timestamped SQL: YYYYMMDDHHMMSS_{description}.sql — never rename after applying
+  seed.sql            ← Dev seed data
+messages/             ← next-intl JSON files (en.json only at launch)
+e2e/                  ← Playwright specs + fixtures (only place tests live outside src)
+middleware.ts         ← Auth + premium gating + admin role check (single middleware)
+```
+
+**Test layout:** Unit tests are co-located alongside source (e.g. `TimerScreen.test.tsx` next to `TimerScreen.tsx`). Only Playwright E2E specs live in `e2e/`.
+
+**Naming conventions** (enforced — see `architecture.md` §"Naming Patterns" for the full list):
+- DB: tables `snake_case` plural, FKs `{table_singular}_id`, RLS policies `{table}_{action}_{subject}`
+- API: kebab-case plural-noun paths (`/api/swap-listings`), no verb-in-path (`/api/getUser` is wrong)
+- Code: PascalCase components, `use*` hooks, Zod schemas `*Schema`, Zustand stores `*Store` (file `*.store.ts`), constants `SCREAMING_SNAKE_CASE`
+
+**Deployment:** Vercel (Next.js) + Supabase Pro + Resend (email) + Sentry (errors) + Stripe (payments). Vercel auto-deploys on push to `main`; preview deploys on every PR. GitHub Actions runs Vitest + tsc + axe-core pre-merge.
 
 ## Critical Patterns (Enforced)
 
@@ -147,6 +182,10 @@ return NextResponse.json(
 **i18n:** All UI strings via next-intl translation keys. No hardcoded copy in components. `messages/en.json` is the only launch language. Dates via `Intl.DateTimeFormat`.
 
 **Animations:** All Framer Motion animations must check `prefers-reduced-motion` and provide instant-transition fallbacks.
+
+**Migrations:** Each schema change is a new timestamped SQL file in `supabase/migrations/`. Never rename a migration after it has been applied (locally or remotely) — Supabase tracks them by filename. After `supabase db push`, always regenerate types: `supabase gen types typescript --local > lib/supabase/database.types.ts`.
+
+**RLS read policies split:** Public catalog, puzzle details, and community leaderboards have open read policies. Everything user-scoped (solves, listings, profiles, subscriptions) is restricted to the owner's rows via the anon key. Plan RLS for any new table from day one.
 
 ## Anti-Patterns (Reject in Code Review)
 
